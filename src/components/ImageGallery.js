@@ -1,6 +1,8 @@
 import React from 'react';
 import ImageGalleryItem from './ImageGalleryItem'
 import Modal from './Modal'
+import Button from './Button'
+import ImgApi from '../services/img-api'
 
 export default class ImageGallery extends React.Component{
   state = {
@@ -12,25 +14,28 @@ export default class ImageGallery extends React.Component{
 }
   
   componentDidUpdate(prevProps, prevState) {
-    if (prevProps.searchValue !== this.props.searchValue || prevState.currentPage !== this.state.currentPage){
+
+    const prevSearch = prevProps.searchValue;
+    const nextSearch = this.props.searchValue;
+    let currentPage = this.state.currentPage;
+
+    if (prevSearch !== nextSearch || prevState.currentPage !== currentPage){
       this.setState({status : 'pending'})
       console.log("изменился запрос");
       
-      if (prevProps.searchValue !== this.props.searchValue){
+      if (prevSearch !== nextSearch){
         this.setState({images: []})
-      if (prevProps.searchValue !== this.props.searchValue){
+      if (prevSearch !== nextSearch){
         this.setState({currentPage: 1})
       }    
     }
-      const  apiKey = "18829521-149535e09ae4dfbd453ab9183";
-      const url = `https://pixabay.com/api/?q=${this.props.searchValue}&page=${this.state.currentPage}&key=${apiKey}&image_type=photo&orientation=horizontal&per_page=12`;
-  
-      const fetchImg = ()=>{
-        fetch(url)
-        .then(response => {
-          if (response.ok) { return response.json()}
-            this.setState({status: 'rejected'})
-        })  
+
+      const options = {
+        nextSearch, 
+        currentPage,
+      }  
+
+        ImgApi.fetchImg(options)
         .then(response => {
           console.log(response);
            this.setState(state => ({
@@ -41,16 +46,17 @@ export default class ImageGallery extends React.Component{
           return this.setState({ status: 'resolved' })
         })
         .catch(error => this.setState({ status: 'rejected' }))        
-      }
+      
       this.setState({loading: true})
-      fetchImg (this.props.searchValue)
+      // fetchImg (this.props.searchValue)
     }
   }
 
   onBtnClick = () =>{
     return this.setState(state =>
       ({currentPage: state.currentPage + 1}))
-  }  
+  } 
+ 
 
   toggleModal = () => {
     this.setState(state => ({
@@ -88,8 +94,9 @@ export default class ImageGallery extends React.Component{
           )}
         </ul>
 
-        <button type='button' onClick={this.onBtnClick} className="Button">Load more</button>
-        { showModal &&  <Modal onClose ={this.toggleModal}>             
+        <Button  onClick={this.onBtnClick}/>
+
+        { showModal &&  <Modal onClose ={this.toggleModal}>              
             <img src={currentImageUrl} alt="" /> 
           </Modal>}
         </>
